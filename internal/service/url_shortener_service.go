@@ -116,7 +116,10 @@ func (s *URLShortenerService) RecordClick(ctx context.Context, shortURL *domain.
 func (s *URLShortenerService) generateBase62Code(length int) string {
 	result := make([]byte, length)
 	for i := range result {
-		num, _ := rand.Int(rand.Reader, big.NewInt(int64(len(base62Chars))))
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(base62Chars))))
+		if err != nil {
+			return ""
+		}
 		result[i] = base62Chars[num.Int64()]
 	}
 	return string(result)
