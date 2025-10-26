@@ -18,10 +18,10 @@ type AuthService interface {
 }
 
 type authService struct {
-	userRepo       repository.UserRepository
-	jwtMiddleware  *middleware.JWTMiddleware
-	jwtExpiration  time.Duration
-	logger         *zap.Logger
+	userRepo      repository.UserRepository
+	jwtMiddleware *middleware.JWTMiddleware
+	jwtExpiration time.Duration
+	logger        *zap.Logger
 }
 
 func NewAuthService(userRepo repository.UserRepository, jwtMiddleware *middleware.JWTMiddleware, jwtExpiration time.Duration, logger *zap.Logger) AuthService {
