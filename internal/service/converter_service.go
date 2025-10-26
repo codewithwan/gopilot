@@ -134,9 +134,18 @@ func (s *ConverterService) rgbToHex(rgb string) (string, error) {
 		return "", fmt.Errorf("invalid RGB format")
 	}
 
-	r, _ := strconv.Atoi(strings.TrimSpace(parts[0]))
-	g, _ := strconv.Atoi(strings.TrimSpace(parts[1]))
-	b, _ := strconv.Atoi(strings.TrimSpace(parts[2]))
+	r, err := strconv.Atoi(strings.TrimSpace(parts[0]))
+	if err != nil {
+		return "", fmt.Errorf("invalid red component in RGB: %v", err)
+	}
+	g, err := strconv.Atoi(strings.TrimSpace(parts[1]))
+	if err != nil {
+		return "", fmt.Errorf("invalid green component in RGB: %v", err)
+	}
+	b, err := strconv.Atoi(strings.TrimSpace(parts[2]))
+	if err != nil {
+		return "", fmt.Errorf("invalid blue component in RGB: %v", err)
+	}
 
 	return fmt.Sprintf("#%02x%02x%02x", r, g, b), nil
 }
