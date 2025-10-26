@@ -56,11 +56,21 @@ sqlc-generate: ## Generate sqlc code
 swagger-generate: ## Generate Swagger documentation
 	swag init -g cmd/server/main.go -o docs
 
+gen:openapi: swagger-generate ## Alias for swagger-generate
+
 install-tools: ## Install development tools
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 	go install github.com/swaggo/swag/cmd/swag@latest
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+
+fmt: ## Format code
+	go fmt ./...
+
+vet: ## Run go vet
+	go vet ./...
+
+generate: sqlc-generate swagger-generate ## Generate all code (sqlc + swagger)
 
 dev: ## Run development environment with docker-compose
 	docker-compose up -d
