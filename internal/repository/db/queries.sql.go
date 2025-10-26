@@ -24,6 +24,130 @@ func (q *Queries) CountTodos(ctx context.Context, userID int64) (int64, error) {
 	return count, err
 }
 
+const createPaste = `-- name: CreatePaste :one
+INSERT INTO pastes (id, title, content, syntax, is_public, is_compressed, expires_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, title, content, syntax, is_public, is_compressed, expires_at, created_at, updated_at
+`
+
+type CreatePasteParams struct {
+	ID           string           `json:"id"`
+	Title        pgtype.Text      `json:"title"`
+	Content      string           `json:"content"`
+	Syntax       pgtype.Text      `json:"syntax"`
+	IsPublic     bool             `json:"is_public"`
+	IsCompressed bool             `json:"is_compressed"`
+	ExpiresAt    pgtype.Timestamp `json:"expires_at"`
+}
+
+// Pastebin Queries
+func (q *Queries) CreatePaste(ctx context.Context, arg CreatePasteParams) (Paste, error) {
+	row := q.db.QueryRow(ctx, createPaste,
+		arg.ID,
+		arg.Title,
+		arg.Content,
+		arg.Syntax,
+		arg.IsPublic,
+		arg.IsCompressed,
+		arg.ExpiresAt,
+	)
+	var i Paste
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Content,
+		&i.Syntax,
+		&i.IsPublic,
+		&i.IsCompressed,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createQRCode = `-- name: CreateQRCode :one
+INSERT INTO qr_codes (id, text, format, size, image_data)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, text, format, size, created_at
+`
+
+type CreateQRCodeParams struct {
+	ID        string `json:"id"`
+	Text      string `json:"text"`
+	Format    string `json:"format"`
+	Size      int32  `json:"size"`
+	ImageData []byte `json:"image_data"`
+}
+
+type CreateQRCodeRow struct {
+	ID        string           `json:"id"`
+	Text      string           `json:"text"`
+	Format    string           `json:"format"`
+	Size      int32            `json:"size"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+}
+
+// QR Code Queries
+func (q *Queries) CreateQRCode(ctx context.Context, arg CreateQRCodeParams) (CreateQRCodeRow, error) {
+	row := q.db.QueryRow(ctx, createQRCode,
+		arg.ID,
+		arg.Text,
+		arg.Format,
+		arg.Size,
+		arg.ImageData,
+	)
+	var i CreateQRCodeRow
+	err := row.Scan(
+		&i.ID,
+		&i.Text,
+		&i.Format,
+		&i.Size,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createShortURL = `-- name: CreateShortURL :one
+INSERT INTO short_urls (code, original_url, alias, clicks, is_public, expires_at)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, code, original_url, alias, clicks, is_public, expires_at, created_at, updated_at
+`
+
+type CreateShortURLParams struct {
+	Code        string           `json:"code"`
+	OriginalUrl string           `json:"original_url"`
+	Alias       pgtype.Text      `json:"alias"`
+	Clicks      int64            `json:"clicks"`
+	IsPublic    bool             `json:"is_public"`
+	ExpiresAt   pgtype.Timestamp `json:"expires_at"`
+}
+
+// URL Shortener Queries
+func (q *Queries) CreateShortURL(ctx context.Context, arg CreateShortURLParams) (ShortUrl, error) {
+	row := q.db.QueryRow(ctx, createShortURL,
+		arg.Code,
+		arg.OriginalUrl,
+		arg.Alias,
+		arg.Clicks,
+		arg.IsPublic,
+		arg.ExpiresAt,
+	)
+	var i ShortUrl
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.OriginalUrl,
+		&i.Alias,
+		&i.Clicks,
+		&i.IsPublic,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createTodo = `-- name: CreateTodo :one
 INSERT INTO todos (title, description, completed, user_id)
 VALUES ($1, $2, $3, $4)
@@ -57,6 +181,28 @@ func (q *Queries) CreateTodo(ctx context.Context, arg CreateTodoParams) (Todo, e
 	return i, err
 }
 
+const createURLClick = `-- name: CreateURLClick :exec
+INSERT INTO url_clicks (short_url_id, referrer, user_agent, ip_address)
+VALUES ($1, $2, $3, $4)
+`
+
+type CreateURLClickParams struct {
+	ShortUrlID int64       `json:"short_url_id"`
+	Referrer   pgtype.Text `json:"referrer"`
+	UserAgent  pgtype.Text `json:"user_agent"`
+	IpAddress  pgtype.Text `json:"ip_address"`
+}
+
+func (q *Queries) CreateURLClick(ctx context.Context, arg CreateURLClickParams) error {
+	_, err := q.db.Exec(ctx, createURLClick,
+		arg.ShortUrlID,
+		arg.Referrer,
+		arg.UserAgent,
+		arg.IpAddress,
+	)
+	return err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (username, password)
 VALUES ($1, $2)
@@ -87,6 +233,36 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	return i, err
 }
 
+const deleteExpiredPastes = `-- name: DeleteExpiredPastes :exec
+DELETE FROM pastes
+WHERE expires_at IS NOT NULL AND expires_at < CURRENT_TIMESTAMP
+`
+
+func (q *Queries) DeleteExpiredPastes(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, deleteExpiredPastes)
+	return err
+}
+
+const deleteExpiredShortURLs = `-- name: DeleteExpiredShortURLs :exec
+DELETE FROM short_urls
+WHERE expires_at IS NOT NULL AND expires_at < CURRENT_TIMESTAMP
+`
+
+func (q *Queries) DeleteExpiredShortURLs(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, deleteExpiredShortURLs)
+	return err
+}
+
+const deletePaste = `-- name: DeletePaste :exec
+DELETE FROM pastes
+WHERE id = $1
+`
+
+func (q *Queries) DeletePaste(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deletePaste, id)
+	return err
+}
+
 const deleteTodo = `-- name: DeleteTodo :exec
 DELETE FROM todos
 WHERE id = $1 AND user_id = $2
@@ -100,6 +276,72 @@ type DeleteTodoParams struct {
 func (q *Queries) DeleteTodo(ctx context.Context, arg DeleteTodoParams) error {
 	_, err := q.db.Exec(ctx, deleteTodo, arg.ID, arg.UserID)
 	return err
+}
+
+const getPasteByID = `-- name: GetPasteByID :one
+SELECT id, title, content, syntax, is_public, is_compressed, expires_at, created_at, updated_at
+FROM pastes
+WHERE id = $1
+`
+
+func (q *Queries) GetPasteByID(ctx context.Context, id string) (Paste, error) {
+	row := q.db.QueryRow(ctx, getPasteByID, id)
+	var i Paste
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Content,
+		&i.Syntax,
+		&i.IsPublic,
+		&i.IsCompressed,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getQRCodeByID = `-- name: GetQRCodeByID :one
+SELECT id, text, format, size, image_data, created_at
+FROM qr_codes
+WHERE id = $1
+`
+
+func (q *Queries) GetQRCodeByID(ctx context.Context, id string) (QrCode, error) {
+	row := q.db.QueryRow(ctx, getQRCodeByID, id)
+	var i QrCode
+	err := row.Scan(
+		&i.ID,
+		&i.Text,
+		&i.Format,
+		&i.Size,
+		&i.ImageData,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getShortURLByCode = `-- name: GetShortURLByCode :one
+SELECT id, code, original_url, alias, clicks, is_public, expires_at, created_at, updated_at
+FROM short_urls
+WHERE code = $1
+`
+
+func (q *Queries) GetShortURLByCode(ctx context.Context, code string) (ShortUrl, error) {
+	row := q.db.QueryRow(ctx, getShortURLByCode, code)
+	var i ShortUrl
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.OriginalUrl,
+		&i.Alias,
+		&i.Clicks,
+		&i.IsPublic,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getTodoByID = `-- name: GetTodoByID :one
@@ -170,6 +412,55 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const incrementShortURLClicks = `-- name: IncrementShortURLClicks :exec
+UPDATE short_urls
+SET clicks = clicks + 1, updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+`
+
+func (q *Queries) IncrementShortURLClicks(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, incrementShortURLClicks, id)
+	return err
+}
+
+const listRecentPastes = `-- name: ListRecentPastes :many
+SELECT id, title, content, syntax, is_public, is_compressed, expires_at, created_at, updated_at
+FROM pastes
+WHERE is_public = true
+ORDER BY created_at DESC
+LIMIT $1
+`
+
+func (q *Queries) ListRecentPastes(ctx context.Context, limit int32) ([]Paste, error) {
+	rows, err := q.db.Query(ctx, listRecentPastes, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Paste
+	for rows.Next() {
+		var i Paste
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Content,
+			&i.Syntax,
+			&i.IsPublic,
+			&i.IsCompressed,
+			&i.ExpiresAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listTodos = `-- name: ListTodos :many

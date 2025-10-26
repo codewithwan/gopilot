@@ -28,9 +28,9 @@ import (
 	_ "github.com/codewithwan/gopilot/docs"
 )
 
-// @title GoPilot API
+// @title GoPilot API - Developer Tools Platform
 // @version 1.0
-// @description Production-ready REST API for managing todos
+// @description Production-ready REST API platform with modular developer tools
 // @termsOfService http://swagger.io/terms/
 
 // @contact.name API Support
@@ -109,6 +109,9 @@ func run() error {
 	queries := db.New(dbpool)
 	userRepo := repository.NewUserRepository(queries)
 	todoRepo := repository.NewTodoRepository(queries)
+	urlShortenerRepo := repository.NewURLShortenerRepository(queries)
+	pastebinRepo := repository.NewPastebinRepository(queries)
+	qrcodeRepo := repository.NewQRCodeRepository(queries)
 
 	// Initialize JWT middleware
 	jwtMiddleware := middleware.NewJWTMiddleware(cfg.JWT.Secret)
@@ -116,10 +119,17 @@ func run() error {
 	// Initialize services
 	authService := service.NewAuthService(userRepo, jwtMiddleware, cfg.JWT.Expiration, log.Logger)
 	todoService := service.NewTodoService(todoRepo, log.Logger)
+	urlShortenerService := service.NewURLShortenerService(urlShortenerRepo)
+	pastebinService := service.NewPastebinService(pastebinRepo)
+	qrcodeService := service.NewQRCodeService(qrcodeRepo)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService)
 	todoHandler := handler.NewTodoHandler(todoService)
+	urlShortenerHandler := handler.NewURLShortenerHandler(urlShortenerService)
+	pastebinHandler := handler.NewPastebinHandler(pastebinService)
+	qrcodeHandler := handler.NewQRCodeHandler(qrcodeService)
+	utilityHandler := handler.NewUtilityHandler()
 
 	// Set Gin mode
 	if cfg.Log.Level == "debug" {
@@ -148,8 +158,30 @@ func run() error {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
+	// Ready check endpoint
+	router.GET("/healthz", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
+	})
+
+	router.GET("/readyz", func(c *gin.Context) {
+		if err := dbpool.Ping(c.Request.Context()); err != nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"status": "ready"})
+	})
+
 	// Swagger documentation
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.GET("/docs", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
+	})
+
+	// Short URL redirect (public)
+	router.GET("/s/:code", urlShortenerHandler.RedirectShortURL)
+
+	// Paste content (public)
+	router.GET("/p/:id", pastebinHandler.GetPaste)
 
 	// API v1 routes
 	v1 := router.Group("/api/v1")
@@ -171,6 +203,50 @@ func run() error {
 			todos.PUT("/:id", todoHandler.UpdateTodo)
 			todos.DELETE("/:id", todoHandler.DeleteTodo)
 		}
+	}
+
+	// Public utility API routes
+	v1Public := router.Group("/v1")
+	{
+		// URL Shortener
+		v1Public.POST("/shorten", urlShortenerHandler.CreateShortURL)
+		v1Public.GET("/shorten/:code", urlShortenerHandler.GetShortURL)
+
+		// Pastebin
+		v1Public.POST("/paste", pastebinHandler.CreatePaste)
+		v1Public.DELETE("/paste/:id", pastebinHandler.DeletePaste)
+		v1Public.GET("/paste/recent", pastebinHandler.ListRecentPastes)
+
+		// QR Code
+		v1Public.POST("/qr", qrcodeHandler.GenerateQR)
+		v1Public.GET("/qr/:id", qrcodeHandler.GetQRCode)
+
+		// Hash & Encode
+		v1Public.POST("/hash", utilityHandler.Hash)
+		v1Public.POST("/encode", utilityHandler.Encode)
+		v1Public.POST("/generate/password", utilityHandler.GeneratePassword)
+
+		// Converter
+		v1Public.POST("/convert/base", utilityHandler.ConvertBase)
+		v1Public.POST("/convert/color", utilityHandler.ConvertColor)
+		v1Public.POST("/convert/time", utilityHandler.ConvertTime)
+
+		// Formatter
+		v1Public.POST("/format/json", utilityHandler.FormatJSON)
+		v1Public.POST("/format/yaml", utilityHandler.ConvertYAML)
+
+		// Generator
+		v1Public.POST("/generate/uuid", utilityHandler.GenerateUUID)
+		v1Public.POST("/generate/token", utilityHandler.GenerateToken)
+		v1Public.POST("/generate/lorem", utilityHandler.GenerateLorem)
+		v1Public.POST("/generate/user", utilityHandler.GenerateFakeUser)
+		v1Public.POST("/generate/number", utilityHandler.GenerateRandomNumber)
+
+		// Crypto
+		v1Public.POST("/crypto/aes", utilityHandler.AESOperation)
+		v1Public.POST("/crypto/rsa/keygen", utilityHandler.GenerateRSAKeypair)
+		v1Public.POST("/crypto/rsa", utilityHandler.RSAOperation)
+		v1Public.POST("/crypto/hmac", utilityHandler.HMACOperation)
 	}
 
 	// Create HTTP server

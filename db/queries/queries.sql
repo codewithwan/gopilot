@@ -44,3 +44,64 @@ WHERE id = $1 AND user_id = $2;
 SELECT COUNT(*)
 FROM todos
 WHERE user_id = $1;
+
+-- URL Shortener Queries
+-- name: CreateShortURL :one
+INSERT INTO short_urls (code, original_url, alias, clicks, is_public, expires_at)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, code, original_url, alias, clicks, is_public, expires_at, created_at, updated_at;
+
+-- name: GetShortURLByCode :one
+SELECT id, code, original_url, alias, clicks, is_public, expires_at, created_at, updated_at
+FROM short_urls
+WHERE code = $1;
+
+-- name: IncrementShortURLClicks :exec
+UPDATE short_urls
+SET clicks = clicks + 1, updated_at = CURRENT_TIMESTAMP
+WHERE id = $1;
+
+-- name: CreateURLClick :exec
+INSERT INTO url_clicks (short_url_id, referrer, user_agent, ip_address)
+VALUES ($1, $2, $3, $4);
+
+-- name: DeleteExpiredShortURLs :exec
+DELETE FROM short_urls
+WHERE expires_at IS NOT NULL AND expires_at < CURRENT_TIMESTAMP;
+
+-- Pastebin Queries
+-- name: CreatePaste :one
+INSERT INTO pastes (id, title, content, syntax, is_public, is_compressed, expires_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, title, content, syntax, is_public, is_compressed, expires_at, created_at, updated_at;
+
+-- name: GetPasteByID :one
+SELECT id, title, content, syntax, is_public, is_compressed, expires_at, created_at, updated_at
+FROM pastes
+WHERE id = $1;
+
+-- name: DeletePaste :exec
+DELETE FROM pastes
+WHERE id = $1;
+
+-- name: ListRecentPastes :many
+SELECT id, title, content, syntax, is_public, is_compressed, expires_at, created_at, updated_at
+FROM pastes
+WHERE is_public = true
+ORDER BY created_at DESC
+LIMIT $1;
+
+-- name: DeleteExpiredPastes :exec
+DELETE FROM pastes
+WHERE expires_at IS NOT NULL AND expires_at < CURRENT_TIMESTAMP;
+
+-- QR Code Queries
+-- name: CreateQRCode :one
+INSERT INTO qr_codes (id, text, format, size, image_data)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, text, format, size, created_at;
+
+-- name: GetQRCodeByID :one
+SELECT id, text, format, size, image_data, created_at
+FROM qr_codes
+WHERE id = $1;

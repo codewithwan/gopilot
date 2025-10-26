@@ -10,12 +10,27 @@ import (
 
 type Querier interface {
 	CountTodos(ctx context.Context, userID int64) (int64, error)
+	// Pastebin Queries
+	CreatePaste(ctx context.Context, arg CreatePasteParams) (Paste, error)
+	// QR Code Queries
+	CreateQRCode(ctx context.Context, arg CreateQRCodeParams) (CreateQRCodeRow, error)
+	// URL Shortener Queries
+	CreateShortURL(ctx context.Context, arg CreateShortURLParams) (ShortUrl, error)
 	CreateTodo(ctx context.Context, arg CreateTodoParams) (Todo, error)
+	CreateURLClick(ctx context.Context, arg CreateURLClickParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
+	DeleteExpiredPastes(ctx context.Context) error
+	DeleteExpiredShortURLs(ctx context.Context) error
+	DeletePaste(ctx context.Context, id string) error
 	DeleteTodo(ctx context.Context, arg DeleteTodoParams) error
+	GetPasteByID(ctx context.Context, id string) (Paste, error)
+	GetQRCodeByID(ctx context.Context, id string) (QrCode, error)
+	GetShortURLByCode(ctx context.Context, code string) (ShortUrl, error)
 	GetTodoByID(ctx context.Context, arg GetTodoByIDParams) (Todo, error)
 	GetUserByID(ctx context.Context, id int64) (GetUserByIDRow, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
+	IncrementShortURLClicks(ctx context.Context, id int64) error
+	ListRecentPastes(ctx context.Context, limit int32) ([]Paste, error)
 	ListTodos(ctx context.Context, arg ListTodosParams) ([]Todo, error)
 	UpdateTodo(ctx context.Context, arg UpdateTodoParams) (Todo, error)
 }
