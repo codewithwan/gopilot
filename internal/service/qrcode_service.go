@@ -81,6 +81,8 @@ func (s *QRCodeService) GetQRCode(ctx context.Context, id string) (*domain.QRCod
 // generateID generates a random ID
 func (s *QRCodeService) generateID(length int) string {
 	b := make([]byte, length)
-	rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		return ""
+	}
 	return base64.URLEncoding.EncodeToString(b)[:length]
 }
