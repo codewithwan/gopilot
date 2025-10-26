@@ -49,3 +49,4 @@ temp/
 # Database
 *.db
 *.sqlite
+server
