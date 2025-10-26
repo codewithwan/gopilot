@@ -2,7 +2,11 @@ version: "2"
 sql:
   - engine: "postgresql"
     queries: "db/queries/queries.sql"
-    schema: "db/migrations/001_initial_schema.sql"
+    schema: 
+      - "db/migrations/001_initial_schema.sql"
+      - "db/migrations/002_url_shortener.sql"
+      - "db/migrations/003_pastebin.sql"
+      - "db/migrations/004_qr_codes.sql"
     gen:
       go:
         package: "db"

@@ -8,6 +8,39 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Paste struct {
+	ID           string           `json:"id"`
+	Title        pgtype.Text      `json:"title"`
+	Content      string           `json:"content"`
+	Syntax       pgtype.Text      `json:"syntax"`
+	IsPublic     bool             `json:"is_public"`
+	IsCompressed bool             `json:"is_compressed"`
+	ExpiresAt    pgtype.Timestamp `json:"expires_at"`
+	CreatedAt    pgtype.Timestamp `json:"created_at"`
+	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
+}
+
+type QrCode struct {
+	ID        string           `json:"id"`
+	Text      string           `json:"text"`
+	Format    string           `json:"format"`
+	Size      int32            `json:"size"`
+	ImageData []byte           `json:"image_data"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+}
+
+type ShortUrl struct {
+	ID          int64            `json:"id"`
+	Code        string           `json:"code"`
+	OriginalUrl string           `json:"original_url"`
+	Alias       pgtype.Text      `json:"alias"`
+	Clicks      int64            `json:"clicks"`
+	IsPublic    bool             `json:"is_public"`
+	ExpiresAt   pgtype.Timestamp `json:"expires_at"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+}
+
 type Todo struct {
 	ID          int64            `json:"id"`
 	Title       string           `json:"title"`
@@ -16,6 +49,15 @@ type Todo struct {
 	UserID      int64            `json:"user_id"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+}
+
+type UrlClick struct {
+	ID         int64            `json:"id"`
+	ShortUrlID int64            `json:"short_url_id"`
+	Referrer   pgtype.Text      `json:"referrer"`
+	UserAgent  pgtype.Text      `json:"user_agent"`
+	IpAddress  pgtype.Text      `json:"ip_address"`
+	ClickedAt  pgtype.Timestamp `json:"clicked_at"`
 }
 
 type User struct {
