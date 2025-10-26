@@ -70,6 +70,12 @@ fmt: ## Format code
 vet: ## Run go vet
 	go vet ./...
 
+fmt: ## Format code
+	go fmt ./...
+
+vet: ## Run go vet
+	go vet ./...
+
 generate: sqlc-generate swagger-generate ## Generate all code (sqlc + swagger)
 
 dev: ## Run development environment with docker-compose
@@ -79,5 +85,9 @@ dev-down: ## Stop development environment
 	docker-compose down
 
 db-reset: migrate-down migrate-up ## Reset database
+
+seed: ## Seed database with sample data
+	@echo "Database seeding not yet implemented"
+	@echo "To add seed data, create a seed script in db/seeds/"
 
 .DEFAULT_GOAL := help

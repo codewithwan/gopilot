@@ -102,9 +102,23 @@ func (s *ConverterService) hexToRGB(hex string) (int, int, int, error) {
 		return 0, 0, 0, fmt.Errorf("invalid hex color format")
 	}
 
-	r, _ := strconv.ParseInt(hex[0:2], 16, 64)
-	g, _ := strconv.ParseInt(hex[2:4], 16, 64)
-	b, _ := strconv.ParseInt(hex[4:6], 16, 64)
+	r, err := strconv.ParseInt(hex[0:2], 16, 64)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("invalid hex color: %w", err)
+	}
+	g, err := strconv.ParseInt(hex[2:4], 16, 64)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("invalid hex color: %w", err)
+	}
+	b, err := strconv.ParseInt(hex[4:6], 16, 64)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("invalid hex color: %w", err)
+	}
+
+	// Security: Validate range before conversion
+	if r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255 {
+		return 0, 0, 0, fmt.Errorf("color values out of range")
+	}
 
 	return int(r), int(g), int(b), nil
 }

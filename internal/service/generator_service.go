@@ -31,6 +31,10 @@ func (s *GeneratorService) GenerateUUID(req *domain.GenerateUUIDRequest) (*domai
 	count := 1
 	if req.Count != nil {
 		count = *req.Count
+		// Security: Limit count to prevent DoS
+		if count > 100 {
+			count = 100
+		}
 	}
 
 	uuids := make([]string, count)
@@ -94,6 +98,10 @@ func (s *GeneratorService) GenerateLorem(req *domain.GenerateLoremRequest) (*dom
 	count := 5
 	if req.Count != nil {
 		count = *req.Count
+		// Security: Limit count to prevent DoS
+		if count > 100 {
+			count = 100
+		}
 	}
 
 	var text string
@@ -131,6 +139,10 @@ func (s *GeneratorService) GenerateFakeUser(req *domain.GenerateFakeUserRequest)
 	count := 1
 	if req.Count != nil {
 		count = *req.Count
+		// Security: Limit count to prevent DoS
+		if count > 100 {
+			count = 100
+		}
 	}
 
 	users := make([]domain.FakeUser, count)
@@ -169,6 +181,10 @@ func (s *GeneratorService) GenerateRandomNumber(req *domain.GenerateRandomNumber
 	count := 1
 	if req.Count != nil {
 		count = *req.Count
+		// Security: Limit count to prevent DoS
+		if count > 100 {
+			count = 100
+		}
 	}
 
 	numbers := make([]interface{}, count)
@@ -177,6 +193,9 @@ func (s *GeneratorService) GenerateRandomNumber(req *domain.GenerateRandomNumber
 		if numType == "int" {
 			// Generate random integer
 			diff := int64(max - min)
+			if diff < 0 {
+				return nil, fmt.Errorf("max must be greater than min")
+			}
 			n, err := rand.Int(rand.Reader, big.NewInt(diff+1))
 			if err != nil {
 				return nil, fmt.Errorf("failed to generate random number: %w", err)

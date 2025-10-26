@@ -359,13 +359,10 @@ curl -X POST http://localhost:8080/v1/format/json \
 
 #### Crypto
 ```bash
-# Generate RSA keypair
-curl -X POST http://localhost:8080/v1/crypto/rsa/keygen
-
-# AES encrypt
+# AES encrypt (use strong 32-character keys for AES-256)
 curl -X POST http://localhost:8080/v1/crypto/aes \
   -H "Content-Type: application/json" \
-  -d '{"operation":"encrypt","text":"secret","key":"myverysecretkey1"}'
+  -d '{"operation":"encrypt","text":"secret","key":"strongkey32characterslongxxxx"}'
 ```
 
 ### Legacy Endpoints (Todo App)
@@ -433,7 +430,7 @@ make migrate-down
 # Reset database
 make db-reset
 
-# Seed database (if seed command exists)
+# Seed database with sample data (placeholder for future implementation)
 make seed
 ```
 
@@ -494,7 +491,6 @@ The application exposes Prometheus metrics at `/metrics`. Key metrics include:
 - HTTP request count and duration
 - Database connection pool metrics
 - Go runtime metrics
-- Custom business metrics per module
 
 ### OpenTelemetry Tracing
 

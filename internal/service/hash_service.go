@@ -105,6 +105,10 @@ func (s *HashService) GeneratePassword(req *domain.GeneratePasswordRequest) (*do
 	length := 16
 	if req.Length != nil {
 		length = *req.Length
+		// Security: Limit password length to prevent DoS
+		if length > 128 {
+			length = 128
+		}
 	}
 
 	includeUpper := true
