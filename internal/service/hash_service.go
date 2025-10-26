@@ -1,9 +1,9 @@
 package service
 
 import (
-	"crypto/md5"
+	"crypto/md5" // #nosec G501 - MD5 is provided as a user-requested feature, not for security
 	"crypto/rand"
-	"crypto/sha1"
+	"crypto/sha1" // #nosec G505 - SHA1 is provided as a user-requested feature, not for security
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/base64"
@@ -29,15 +29,15 @@ func (s *HashService) Hash(req *domain.HashRequest) (*domain.HashResponse, error
 	var hash string
 	text := req.Text
 	if req.Salt != nil {
-		text = text + *req.Salt
+		text += *req.Salt
 	}
 
 	switch req.Algorithm {
 	case "md5":
-		h := md5.Sum([]byte(text))
+		h := md5.Sum([]byte(text)) // #nosec G401 - MD5 is provided as a user-requested feature, not for security
 		hash = hex.EncodeToString(h[:])
 	case "sha1":
-		h := sha1.Sum([]byte(text))
+		h := sha1.Sum([]byte(text)) // #nosec G401 - SHA1 is provided as a user-requested feature, not for security
 		hash = hex.EncodeToString(h[:])
 	case "sha256":
 		h := sha256.Sum256([]byte(text))
@@ -70,7 +70,8 @@ func (s *HashService) Encode(req *domain.EncodeRequest) (*domain.EncodeResponse,
 	case "base64-encode":
 		result = base64.StdEncoding.EncodeToString([]byte(req.Text))
 	case "base64-decode":
-		decoded, err := base64.StdEncoding.DecodeString(req.Text)
+		var decoded []byte
+		decoded, err = base64.StdEncoding.DecodeString(req.Text)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode base64: %w", err)
 		}
@@ -85,7 +86,8 @@ func (s *HashService) Encode(req *domain.EncodeRequest) (*domain.EncodeResponse,
 	case "hex-encode":
 		result = hex.EncodeToString([]byte(req.Text))
 	case "hex-decode":
-		decoded, err := hex.DecodeString(req.Text)
+		var decoded []byte
+		decoded, err = hex.DecodeString(req.Text)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode hex: %w", err)
 		}

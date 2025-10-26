@@ -4,15 +4,15 @@ import "time"
 
 // URL Shortener models
 type ShortURL struct {
-	ID          int64     `json:"id"`
-	Code        string    `json:"code"`
-	OriginalURL string    `json:"original_url"`
-	Alias       *string   `json:"alias,omitempty"`
-	Clicks      int64     `json:"clicks"`
-	IsPublic    bool      `json:"is_public"`
+	ID          int64      `json:"id"`
+	Code        string     `json:"code"`
+	OriginalURL string     `json:"original_url"`
+	Alias       *string    `json:"alias,omitempty"`
+	Clicks      int64      `json:"clicks"`
+	IsPublic    bool       `json:"is_public"`
 	ExpiresAt   *time.Time `json:"expires_at,omitempty"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
 type CreateShortURLRequest struct {
@@ -23,12 +23,12 @@ type CreateShortURLRequest struct {
 }
 
 type URLClickLog struct {
-	ID          int64     `json:"id"`
-	ShortURLID  int64     `json:"short_url_id"`
-	Referrer    *string   `json:"referrer,omitempty"`
-	UserAgent   *string   `json:"user_agent,omitempty"`
-	IPAddress   *string   `json:"ip_address,omitempty"`
-	ClickedAt   time.Time `json:"clicked_at"`
+	ID         int64     `json:"id"`
+	ShortURLID int64     `json:"short_url_id"`
+	Referrer   *string   `json:"referrer,omitempty"`
+	UserAgent  *string   `json:"user_agent,omitempty"`
+	IPAddress  *string   `json:"ip_address,omitempty"`
+	ClickedAt  time.Time `json:"clicked_at"`
 }
 
 // Pastebin models
@@ -141,9 +141,9 @@ type ConvertTimeResponse struct {
 }
 
 type FormatJSONRequest struct {
-	JSON    string `json:"json" binding:"required"`
-	Minify  *bool  `json:"minify"`
-	Indent  *int   `json:"indent" binding:"omitempty,min=0,max=8"`
+	JSON   string `json:"json" binding:"required"`
+	Minify *bool  `json:"minify"`
+	Indent *int   `json:"indent" binding:"omitempty,min=0,max=8"`
 }
 
 type FormatJSONResponse struct {
@@ -152,8 +152,8 @@ type FormatJSONResponse struct {
 
 // Generator models
 type GenerateUUIDRequest struct {
-	Version *int    `json:"version" binding:"omitempty,oneof=1 4 7"`
-	Count   *int    `json:"count" binding:"omitempty,min=1,max=100"`
+	Version *int `json:"version" binding:"omitempty,oneof=1 4 7"`
+	Count   *int `json:"count" binding:"omitempty,min=1,max=100"`
 }
 
 type GenerateUUIDResponse struct {
@@ -233,9 +233,9 @@ type RSAKeypairResponse struct {
 }
 
 type RSARequest struct {
-	Operation  string `json:"operation" binding:"required,oneof=encrypt decrypt"`
-	Text       string `json:"text" binding:"required"`
-	Key        string `json:"key" binding:"required"`
+	Operation string `json:"operation" binding:"required,oneof=encrypt decrypt"`
+	Text      string `json:"text" binding:"required"`
+	Key       string `json:"key" binding:"required"`
 }
 
 type RSAResponse struct {
@@ -243,9 +243,9 @@ type RSAResponse struct {
 }
 
 type HMACRequest struct {
-	Operation string `json:"operation" binding:"required,oneof=sign verify"`
-	Text      string `json:"text" binding:"required"`
-	Key       string `json:"key" binding:"required"`
+	Operation string  `json:"operation" binding:"required,oneof=sign verify"`
+	Text      string  `json:"text" binding:"required"`
+	Key       string  `json:"key" binding:"required"`
 	Signature *string `json:"signature"` // Required for verify
 	Algorithm *string `json:"algorithm" binding:"omitempty,oneof=sha256 sha512"`
 }

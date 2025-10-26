@@ -1,7 +1,10 @@
 # GoPilot - Developer Tools API Platform
 
 [![CI/CD Pipeline](https://github.com/codewithwan/gopilot/actions/workflows/ci.yml/badge.svg)](https://github.com/codewithwan/gopilot/actions/workflows/ci.yml)
+[![Security Scanning](https://github.com/codewithwan/gopilot/actions/workflows/security.yml/badge.svg)](https://github.com/codewithwan/gopilot/actions/workflows/security.yml)
+[![CodeQL](https://github.com/codewithwan/gopilot/actions/workflows/codeql.yml/badge.svg)](https://github.com/codewithwan/gopilot/actions/workflows/codeql.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/codewithwan/gopilot)](https://goreportcard.com/report/github.com/codewithwan/gopilot)
+[![codecov](https://codecov.io/gh/codewithwan/gopilot/branch/main/graph/badge.svg)](https://codecov.io/gh/codewithwan/gopilot)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 🧠 **GoPilot** is a production-ready REST API platform that provides a comprehensive collection of modular developer tools. All endpoints are self-contained, require no external dependencies, and can be accessed directly from Swagger UI without writing code.

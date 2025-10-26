@@ -61,12 +61,14 @@ func (r *PastebinRepository) DeletePaste(ctx context.Context, id string) error {
 }
 
 func (r *PastebinRepository) ListRecentPastes(ctx context.Context, limit int) ([]*domain.Paste, error) {
-	// Security: Validate limit before conversion
+	// Security: Validate limit before conversion to prevent overflow
+	// Valid range is 0-100, well within int32 bounds (-2147483648 to 2147483647)
 	if limit < 0 || limit > 100 {
 		limit = 20
 	}
-	
-	results, err := r.queries.ListRecentPastes(ctx, int32(limit))
+
+	// Safe conversion: limit is guaranteed to be in range [0, 100]
+	results, err := r.queries.ListRecentPastes(ctx, int32(limit)) // #nosec G115 - limit is validated to be within safe range
 	if err != nil {
 		return nil, err
 	}

@@ -58,11 +58,12 @@ func (s *ConverterService) ConvertBase(req *domain.ConvertBaseRequest) (*domain.
 // ConvertColor converts colors between different formats
 func (s *ConverterService) ConvertColor(req *domain.ConvertColorRequest) (*domain.ConvertColorResponse, error) {
 	value := strings.TrimSpace(req.Value)
-	
+
 	// Simple color conversion (basic implementation)
 	var result string
-	
-	if strings.HasPrefix(value, "#") {
+
+	switch {
+	case strings.HasPrefix(value, "#"):
 		// HEX to RGB or HSL
 		if req.To == "rgb" {
 			r, g, b, err := s.hexToRGB(value)
@@ -73,7 +74,7 @@ func (s *ConverterService) ConvertColor(req *domain.ConvertColorRequest) (*domai
 		} else {
 			return nil, fmt.Errorf("conversion from hex to %s not yet supported", req.To)
 		}
-	} else if strings.HasPrefix(value, "rgb") {
+	case strings.HasPrefix(value, "rgb"):
 		// RGB to HEX
 		if req.To == "hex" {
 			hex, err := s.rgbToHex(value)
@@ -84,7 +85,7 @@ func (s *ConverterService) ConvertColor(req *domain.ConvertColorRequest) (*domai
 		} else {
 			return nil, fmt.Errorf("conversion from rgb to %s not yet supported", req.To)
 		}
-	} else {
+	default:
 		return nil, fmt.Errorf("unsupported color format")
 	}
 
@@ -129,7 +130,7 @@ func (s *ConverterService) rgbToHex(rgb string) (string, error) {
 	rgb = strings.TrimPrefix(rgb, "rgb(")
 	rgb = strings.TrimSuffix(rgb, ")")
 	parts := strings.Split(rgb, ",")
-	
+
 	if len(parts) != 3 {
 		return "", fmt.Errorf("invalid RGB format")
 	}
@@ -156,18 +157,20 @@ func (s *ConverterService) ConvertTime(req *domain.ConvertTimeRequest) (*domain.
 	var err error
 
 	// Parse input
-	if req.From == "unix" {
-		unix, err := strconv.ParseInt(req.Value, 10, 64)
+	switch req.From {
+	case "unix":
+		var unixTime int64
+		unixTime, err = strconv.ParseInt(req.Value, 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse unix timestamp: %w", err)
 		}
-		t = time.Unix(unix, 0)
-	} else if req.From == "iso8601" {
+		t = time.Unix(unixTime, 0)
+	case "iso8601":
 		t, err = time.Parse(time.RFC3339, req.Value)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse ISO8601: %w", err)
 		}
-	} else {
+	default:
 		return nil, fmt.Errorf("unsupported from format: %s", req.From)
 	}
 

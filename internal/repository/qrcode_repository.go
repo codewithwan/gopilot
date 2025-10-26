@@ -16,11 +16,16 @@ func NewQRCodeRepository(queries *db.Queries) *QRCodeRepository {
 }
 
 func (r *QRCodeRepository) CreateQRCode(ctx context.Context, qr *domain.QRCode) error {
+	// Security: Validate size is within safe range for int32 conversion
+	if qr.Size < 0 || qr.Size > 2048 {
+		qr.Size = 256 // default safe size
+	}
+
 	params := db.CreateQRCodeParams{
 		ID:        qr.ID,
 		Text:      qr.Text,
 		Format:    qr.Format,
-		Size:      int32(qr.Size),
+		Size:      int32(qr.Size), // #nosec G115 - size is validated to be within safe range
 		ImageData: qr.ImageData,
 	}
 

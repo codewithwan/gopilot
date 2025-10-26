@@ -29,18 +29,19 @@ func NewCryptoService() *CryptoService {
 // AESOperation performs AES encryption/decryption
 func (s *CryptoService) AESOperation(req *domain.AESRequest) (*domain.AESResponse, error) {
 	key := []byte(req.Key)
-	
+
 	// Ensure key is proper length (16, 24, or 32 bytes)
-	if len(key) < 16 {
+	switch {
+	case len(key) < 16:
 		// Pad key if too short
 		paddedKey := make([]byte, 16)
 		copy(paddedKey, key)
 		key = paddedKey
-	} else if len(key) > 32 {
+	case len(key) > 32:
 		key = key[:32]
-	} else if len(key) > 24 {
+	case len(key) > 24:
 		key = key[:24]
-	} else if len(key) > 16 {
+	case len(key) > 16:
 		key = key[:24]
 	}
 
@@ -51,7 +52,7 @@ func (s *CryptoService) AESOperation(req *domain.AESRequest) (*domain.AESRespons
 
 	if req.Operation == "encrypt" {
 		plaintext := []byte(req.Text)
-		
+
 		// Create GCM mode
 		gcm, err := cipher.NewGCM(block)
 		if err != nil {
@@ -206,7 +207,7 @@ func (s *CryptoService) HMACOperation(req *domain.HMACRequest) (*domain.HMACResp
 		mac := hmac.New(h, []byte(req.Key))
 		mac.Write([]byte(req.Text))
 		signature := base64.StdEncoding.EncodeToString(mac.Sum(nil))
-		
+
 		return &domain.HMACResponse{Signature: &signature}, nil
 	} else if req.Operation == "verify" {
 		if req.Signature == nil {
@@ -216,7 +217,7 @@ func (s *CryptoService) HMACOperation(req *domain.HMACRequest) (*domain.HMACResp
 		mac := hmac.New(h, []byte(req.Key))
 		mac.Write([]byte(req.Text))
 		expectedSignature := base64.StdEncoding.EncodeToString(mac.Sum(nil))
-		
+
 		valid := hmac.Equal([]byte(expectedSignature), []byte(*req.Signature))
 		return &domain.HMACResponse{Valid: &valid}, nil
 	}
