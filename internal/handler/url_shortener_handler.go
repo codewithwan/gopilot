@@ -90,7 +90,7 @@ func (h *URLShortenerHandler) RedirectShortURL(c *gin.Context) {
 
 	if err := h.service.RecordClick(c.Request.Context(), shortURL, referrer, userAgent, ipAddress); err != nil {
 		// Log error but don't fail the redirect
-		c.Error(err)
+		_ = c.Error(err)
 	}
 
 	c.Redirect(http.StatusFound, shortURL.OriginalURL)

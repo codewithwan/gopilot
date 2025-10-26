@@ -65,8 +65,8 @@ func (r *PastebinRepository) ListRecentPastes(ctx context.Context, limit int) ([
 	if limit < 0 || limit > 100 {
 		limit = 20
 	}
-	
-	results, err := r.queries.ListRecentPastes(ctx, int32(limit))
+
+	results, err := r.queries.ListRecentPastes(ctx, int32(limit)) // #nosec G115 - limit is validated to be within safe range
 	if err != nil {
 		return nil, err
 	}
