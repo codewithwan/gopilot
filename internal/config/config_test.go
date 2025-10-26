@@ -29,8 +29,8 @@ func TestLoad(t *testing.T) {
 func TestLoadWithEnv(t *testing.T) {
 	// Test environment variable override
 	// Viper uses nested keys with dots
-	os.Setenv("SERVER.PORT", "9090")
-	defer os.Unsetenv("SERVER.PORT")
+	os.Setenv("SERVER_PORT", "9090")
+	defer os.Unsetenv("SERVER_PORT")
 
 	cfg, err := Load()
 	if err != nil {
