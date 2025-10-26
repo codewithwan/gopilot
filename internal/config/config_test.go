@@ -43,6 +43,15 @@ func TestLoadWithEnv(t *testing.T) {
 }
 
 func TestDatabaseDSN(t *testing.T) {
+	// Clear any existing DATABASE_DBNAME environment variable to ensure default value
+	originalDBName := os.Getenv("DATABASE_DBNAME")
+	os.Unsetenv("DATABASE_DBNAME")
+	defer func() {
+		if originalDBName != "" {
+			os.Setenv("DATABASE_DBNAME", originalDBName)
+		}
+	}()
+
 	cfg, err := Load()
 	if err != nil {
 		t.Fatalf("Failed to load config: %v", err)
