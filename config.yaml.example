@@ -1,0 +1,30 @@
+server:
+  port: "8080"
+  host: "0.0.0.0"
+  readTimeout: "15s"
+  writeTimeout: "15s"
+
+database:
+  host: "localhost"
+  port: "5432"
+  user: "postgres"
+  password: "postgres"
+  dbname: "gopilot"
+  sslmode: "disable"
+
+jwt:
+  secret: "your-secret-key-change-this-in-production"
+  expiration: "24h"
+
+log:
+  level: "info"
+  format: "json"
+
+metrics:
+  enabled: true
+  port: "9090"
+
+tracing:
+  enabled: false
+  serviceName: "gopilot"
+  endpoint: ""
