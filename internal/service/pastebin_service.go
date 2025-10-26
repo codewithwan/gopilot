@@ -112,6 +112,8 @@ func (s *PastebinService) ListRecentPastes(ctx context.Context, limit int) ([]*d
 // generateID generates a random ID
 func (s *PastebinService) generateID(length int) string {
 	b := make([]byte, length)
-	rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		return ""
+	}
 	return base64.URLEncoding.EncodeToString(b)[:length]
 }
