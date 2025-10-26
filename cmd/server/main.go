@@ -195,11 +195,12 @@ func run() error {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
+	var serverError error
 	select {
 	case <-quit:
 		log.Info("Shutting down server...")
-	case err := <-serverErr:
-		log.Error("Server error, shutting down", zap.Error(err))
+	case serverError = <-serverErr:
+		log.Error("Server error, shutting down", zap.Error(serverError))
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -211,5 +212,8 @@ func run() error {
 	}
 
 	log.Info("Server exited")
+	if serverError != nil {
+		return fmt.Errorf("server error: %w", serverError)
+	}
 	return nil
 }
