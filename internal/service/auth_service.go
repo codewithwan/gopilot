@@ -70,7 +70,7 @@ func (s *authService) Login(ctx context.Context, req *domain.LoginRequest) (*dom
 	}
 
 	// Compare password
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+	if compareErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); compareErr != nil {
 		s.logger.Warn("invalid password attempt", zap.String("username", req.Username))
 		return nil, ErrInvalidCredentials
 	}

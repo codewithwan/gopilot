@@ -100,8 +100,17 @@ func (h *TodoHandler) GetTodo(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/todos [get]
 func (h *TodoHandler) ListTodos(c *gin.Context) {
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	limitStr := c.DefaultQuery("limit", "10")
+	offsetStr := c.DefaultQuery("offset", "0")
+
+	limit, err := strconv.ParseInt(limitStr, 10, 32)
+	if err != nil {
+		limit = 10
+	}
+	offset, err := strconv.ParseInt(offsetStr, 10, 32)
+	if err != nil {
+		offset = 0
+	}
 
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
@@ -145,8 +154,8 @@ func (h *TodoHandler) UpdateTodo(c *gin.Context) {
 	}
 
 	var req domain.UpdateTodoRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if bindErr := c.ShouldBindJSON(&req); bindErr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": bindErr.Error()})
 		return
 	}
 

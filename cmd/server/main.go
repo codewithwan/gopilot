@@ -49,18 +49,23 @@ import (
 // @description Type "Bearer" followed by a space and JWT token.
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
-		fmt.Printf("Failed to load config: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to load config: %w", err)
 	}
 
 	// Initialize logger
 	log, err := logger.New(cfg.Log.Level, cfg.Log.Format)
 	if err != nil {
-		fmt.Printf("Failed to initialize logger: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to initialize logger: %w", err)
 	}
 	defer log.Close()
 
@@ -69,34 +74,36 @@ func main() {
 		zap.String("log_level", cfg.Log.Level),
 	)
 
+	// Connect to database
+	dbpool, err := pgxpool.New(context.Background(), cfg.Database.DSN())
+	if err != nil {
+		log.Error("Failed to connect to database", zap.Error(err))
+		return fmt.Errorf("failed to connect to database: %w", err)
+	}
+	defer dbpool.Close()
+
+	if err := dbpool.Ping(context.Background()); err != nil {
+		log.Error("Failed to ping database", zap.Error(err))
+		return fmt.Errorf("failed to ping database: %w", err)
+	}
+	log.Info("Connected to database")
+
 	// Initialize tracing if enabled
 	if cfg.Tracing.Enabled && cfg.Tracing.Endpoint != "" {
-		tp, err := tracing.InitTracer(cfg.Tracing.ServiceName, cfg.Tracing.Endpoint)
-		if err != nil {
-			log.Error("Failed to initialize tracer", zap.Error(err))
+		tp, tracerErr := tracing.InitTracer(cfg.Tracing.ServiceName, cfg.Tracing.Endpoint)
+		if tracerErr != nil {
+			log.Error("Failed to initialize tracer", zap.Error(tracerErr))
 		} else {
 			defer func() {
 				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 				defer cancel()
-				if err := tp.Shutdown(ctx); err != nil {
-					log.Error("Failed to shutdown tracer", zap.Error(err))
+				if shutdownErr := tp.Shutdown(ctx); shutdownErr != nil {
+					log.Error("Failed to shutdown tracer", zap.Error(shutdownErr))
 				}
 			}()
 			log.Info("Tracing enabled", zap.String("endpoint", cfg.Tracing.Endpoint))
 		}
 	}
-
-	// Connect to database
-	dbpool, err := pgxpool.New(context.Background(), cfg.Database.DSN())
-	if err != nil {
-		log.Fatal("Failed to connect to database", zap.Error(err))
-	}
-	defer dbpool.Close()
-
-	if err := dbpool.Ping(context.Background()); err != nil {
-		log.Fatal("Failed to ping database", zap.Error(err))
-	}
-	log.Info("Connected to database")
 
 	// Initialize repositories
 	queries := db.New(dbpool)
@@ -175,26 +182,34 @@ func main() {
 	}
 
 	// Start server in a goroutine
+	serverErr := make(chan error, 1)
 	go func() {
 		log.Info("Server started", zap.String("address", srv.Addr))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal("Failed to start server", zap.Error(err))
+			log.Error("Failed to start server", zap.Error(err))
+			serverErr <- err
 		}
 	}()
 
-	// Wait for interrupt signal
+	// Wait for interrupt signal or server error
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
 
-	log.Info("Shutting down server...")
+	select {
+	case <-quit:
+		log.Info("Shutting down server...")
+	case err := <-serverErr:
+		log.Error("Server error, shutting down", zap.Error(err))
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server forced to shutdown", zap.Error(err))
+		log.Error("Server forced to shutdown", zap.Error(err))
+		return fmt.Errorf("server forced to shutdown: %w", err)
 	}
 
 	log.Info("Server exited")
+	return nil
 }
