@@ -39,7 +39,7 @@ func (s *CryptoService) AESOperation(req *domain.AESRequest) (*domain.AESRespons
 	} else if len(key) > 32 {
 		key = key[:32]
 	} else if len(key) > 24 {
-		key = key[:32]
+		key = key[:24]
 	} else if len(key) > 16 {
 		key = key[:24]
 	}
